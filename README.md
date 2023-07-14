@@ -56,3 +56,16 @@ To update your submodules with changes from their upstream github repos, do:
 
     git submodule foreach git pull origin master
 
+
+## Install NTL
+
+```shell
+wget https://libntl.org/ntl-11.4.3.tar.gz
+gunzip ntl-xxx.tar.gz
+tar xf ntl-xxx.tar
+cd ntl-xxx/src
+./configure 
+make
+make check
+sudo make install
+```
