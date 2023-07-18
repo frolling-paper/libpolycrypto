@@ -135,46 +135,94 @@ int main(int argc, char *argv[]) {
     libpolycrypto::initialize(nullptr, 0);
     srand(static_cast<unsigned int>(time(NULL)));
 
-    size_t minT = 2;
-    size_t maxT = 10;
+    //size_t minT = 32;
+    size_t maxT = 1<<20;
     size_t maxN = 2*maxT - 1;
 
     Dkg::KatePublicParameters kpp = Dkg::KatePublicParameters::getRandom(maxT - 1);
 
-    loginfo << "Computing accumulators..." << endl;
+    cout << "Computing accumulators..." << endl;
     AccumulatorTree accs(maxN);
     AuthAccumulatorTree authAccs(accs, kpp, maxT);
+    size_t t ;
+    int i =5;
+    for(t=32;t<= (1<<20);t*=2){
+        size_t n = 2*t-1;
+        Dkg::DkgParams pp(t,n,1);
+        pp.setAuthAccumulators(&authAccs);
+        //Dkg::KatePlayer dealer_k(pp,kpp,0,0,0);
+        Dkg::MultipointPlayer dealer_k(pp,kpp,0,0,0);
+        // cout<< dealer_k.id<<endl;
+        dealer_k.f_id=libpolycrypto::random_field_elems(pp.t);
+        cout<<"now commit"<<endl;
 
-    for(size_t t = minT; t <= maxT; t++) {
-        for(size_t n = t+1; n < maxT + 1; n++) {
-            Dkg::DkgParams params(t, n, true);
-            Dkg::FeldmanPublicParameters fpp(params);
-            params.setAuthAccumulators(&authAccs);
+        auto startTime1 = std::chrono::high_resolution_clock::now();
+        dealer_k.comm=multiExp<G1>(
+            kpp.g1si.begin(),
+            kpp.g1si.begin() + static_cast<long>(dealer_k.f_id.size()),
+            dealer_k.f_id.begin(),
+            dealer_k.f_id.end()
+        );
+        auto endTime1 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> fp_ms1 = endTime1 - startTime1;
 
-            for(bool isDkg : { true, false }) {
-                loginfo << "Simulating " << t << " out of " << n << " " << (isDkg ? "DKG" : "VSS") << " ..." << endl;
-
-                loginfo << " * Feldman..." << endl;
-                testFeldman(params, fpp, isDkg);
-
-                loginfo << " * Kate..." << endl;
-                testKateBasedScheme<Dkg::KatePlayer>(params, kpp, isDkg, true);
-
-                loginfo << " * KateSim..." << endl;
-                testKateSimScheme<Dkg::KatePlayer>(params, kpp, isDkg);
-
-                loginfo << " * AMT..." << endl;
-                testKateBasedScheme<Dkg::MultipointPlayer>(params, kpp, isDkg, false);
-
-                loginfo << " * AMTSim..." << endl;
-                testKateSimScheme<Dkg::MultipointPlayer>(params, kpp, isDkg);
-
-                loginfo << endl;
-            }
-        }
+        std::cout << "commit time when" << "t = 2^" << i << ": " << fp_ms1.count() << std::endl;
+        
+        cout<<"now evaluate"<<endl;
+        auto startTime2 = std::chrono::high_resolution_clock::now();
+        dealer_k.evaluate();
+        auto endTime2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> fp_ms2 = endTime2 - startTime2;
+        std::cout << "evaluate time when" << "t=2^" << i << ":  " << fp_ms2.count() << std::endl;
+        cout<<"now proof"<<endl;
+        auto startTime3 = std::chrono::high_resolution_clock::now();
+        dealer_k.computeRealProofs();
+        auto endTime3 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> fp_ms3 = endTime3 - startTime3;
+        std::cout << "proof time when" << "t = 2^" << i << ":  " << fp_ms3.count() << std::endl;
+        cout<<"now verify"<<endl;
+        auto startTime4 = std::chrono::high_resolution_clock::now();
+        dealer_k.verifyShareFromDealer(dealer_k);
+        auto endTime4 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> fp_ms4 = endTime4 - startTime4;
+        std::cout << "verify time when" << "t=2^" << i << ":   " << fp_ms4.count() << std::endl;
+        i++;
     }
 
-    loginfo << "All tests succeeded!" << endl;
+
+    
+
+
+    // for(size_t t = minT; t <= maxT; t*=2) {
+    //     size_t n = 2*t-1;
+    //         Dkg::DkgParams params(t, n, true);
+    //         //Dkg::FeldmanPublicParameters fpp(params);
+    //         params.setAuthAccumulators(&authAccs);
+
+    //         for(bool isDkg : { false }) {
+    //             cout << "Simulating " << t << " out of " << n << " " << (isDkg ? "DKG" : "VSS") << " ..." << endl;
+
+    //             //cout << " * Feldman..." << endl;
+    //             //testFeldman(params, fpp, isDkg);
+
+    //             cout << " * Kate..." << endl;
+    //             testKateBasedScheme<Dkg::KatePlayer>(params, kpp, isDkg, true);
+
+    //             //cout << " * KateSim..." << endl;
+    //             //testKateSimScheme<Dkg::KatePlayer>(params, kpp, isDkg);
+
+    //             cout << " * AMT..." << endl;
+    //             testKateBasedScheme<Dkg::MultipointPlayer>(params, kpp, isDkg, false);
+
+    //             //cout << " * AMTSim..." << endl;
+    //             //testKateSimScheme<Dkg::MultipointPlayer>(params, kpp, isDkg);
+
+    //             cout << endl;
+    //         }
+        
+    // }
+
+    cout << "All tests succeeded!" << endl;
 
     return 0;
 }
