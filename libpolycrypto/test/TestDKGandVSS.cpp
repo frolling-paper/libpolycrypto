@@ -146,12 +146,12 @@ int main(int argc, char *argv[]) {
     AuthAccumulatorTree authAccs(accs, kpp, maxT);
     size_t t ;
     int i =5;
-    for(t=32;t<= (1<<20);t*=2){
+    for(t=32;t<= maxT;t*=2){
         size_t n = 2*t-1;
         Dkg::DkgParams pp(t,n,1);
         pp.setAuthAccumulators(&authAccs);
-        //Dkg::KatePlayer dealer_k(pp,kpp,0,0,0);
-        Dkg::MultipointPlayer dealer_k(pp,kpp,0,0,0);
+        // Dkg::KatePlayer dealer_k(pp,kpp,0,0,0);
+        Dkg::KatePlayer dealer_k(pp,kpp,0,0,0);
         // cout<< dealer_k.id<<endl;
         dealer_k.f_id=libpolycrypto::random_field_elems(pp.t);
         cout<<"now commit"<<endl;
