@@ -135,6 +135,11 @@ int main(int argc, char *argv[]) {
     libpolycrypto::initialize(nullptr, 0);
     srand(static_cast<unsigned int>(time(NULL)));
 
+    // G1 g;
+    // g = G1::random_element();
+    printf("%ld\n", sizeof(G1));
+    return 0;
+
     //size_t minT = 32;
     size_t maxT = 1<<20;
     size_t maxN = 2*maxT - 1;
@@ -177,6 +182,8 @@ int main(int argc, char *argv[]) {
         cout<<"now proof"<<endl;
         auto startTime3 = std::chrono::high_resolution_clock::now();
         dealer_k.computeRealProofs();
+
+        
         auto endTime3 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> fp_ms3 = endTime3 - startTime3;
         std::cout << "proof time when" << "t = 2^" << i << ":  " << fp_ms3.count() << std::endl;
