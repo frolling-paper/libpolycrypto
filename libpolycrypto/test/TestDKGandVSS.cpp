@@ -138,7 +138,6 @@ int main(int argc, char *argv[]) {
     // G1 g;
     // g = G1::random_element();
     printf("%ld\n", sizeof(G1));
-    return 0;
 
     //size_t minT = 32;
     size_t maxT = 1<<20;
